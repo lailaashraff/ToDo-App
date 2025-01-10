@@ -1,0 +1,22 @@
+{
+  "addTaskTitle":"Add new Task",
+  "addTask": "Add Task",
+  "editTask": "Edit Task",
+  "saveChanges": "Save Changes",
+  "selectDate": "Select Date",
+  "enterTitle": "Enter task title",
+  "enterDesc": "Enter task description",
+  "settings": "Settings",
+  "theming": "Theming",
+  "lightTheme": "Light Mode",
+  "darkTheme": "Dark Mode",
+  "language": "Language",
+  "arabic": "Arabic",
+  "english": "English",
+  "todoTitle": "ToDo List",
+  "pleaseEnterTitle": "Please enter task title",
+  "pleaseEnterDesc": "Please enter task description"
+
+
+
+}

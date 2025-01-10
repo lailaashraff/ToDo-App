@@ -1,0 +1,22 @@
+{
+  "addTaskTitle":"إضافة مهمة جديدة",
+  "addTask": "إضافة مهمة",
+  "editTask": "تعديل مهمة",
+  "saveChanges": "حفظ التغييرات",
+  "selectDate": "اختيار تاريخ",
+  "enterTitle": "ادخل عنوان المهمة",
+  "enterDesc": "ادخل وصف المهمة",
+  "settings": "الاعدادات",
+  "theming": "النمط",
+  "lightTheme": "وضع مضئ",
+  "darkTheme": "وضع ليلي",
+  "language": "اللغة",
+  "arabic": "العربية",
+  "english": "الانجليزية",
+  "todoTitle": "قائمة المهام",
+  "pleaseEnterTitle": "برجاء ادخال عنوان المهمة",
+  "pleaseEnterDesc": "برجاء ادخال وصف المهمة"
+
+
+
+}
