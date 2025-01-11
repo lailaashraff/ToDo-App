@@ -2,11 +2,13 @@ import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo/my_theme.dart';
+import 'package:todo/providers/list_provider.dart';
 import 'package:todo/task-list/widgets/task_widget.dart';
 
 import '../../providers/app_config_provider.dart';
 
 class TasksTab extends StatefulWidget {
+
 
   @override
   State<TasksTab> createState() => _TasksTabState();
@@ -18,7 +20,11 @@ class _TasksTabState extends State<TasksTab> {
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<AppConfigProvider>(context);
+    var listProvider = Provider.of<ListProvider>(context);
 
+    if(listProvider.taskList.isEmpty){
+      listProvider.getAllTasksFromFireStore();
+    }
     return Column(
       children: [
         CalendarTimeline(
@@ -36,9 +42,9 @@ class _TasksTabState extends State<TasksTab> {
         Expanded(
           child: ListView.builder(
               itemBuilder: (context, index) {
-                return TaskWidget(taskTitle: 'title$index',taskDesc: 'desc$index',taskDate: '04/1/24',);
+                return TaskWidget(task: listProvider.taskList[index],);
               },
-            itemCount: 20,
+            itemCount: listProvider.taskList.length,
 
           ),
         )

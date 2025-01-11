@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
+import 'package:todo/firebase_utils.dart';
 import 'package:todo/my_theme.dart';
 import 'package:todo/task-list/screens/edit_task_screen.dart';
 
+import '../../models/task.dart';
 import '../../providers/app_config_provider.dart';
+import '../../providers/list_provider.dart';
 
 class TaskWidget extends StatelessWidget {
-  String taskTitle;
-  String taskDesc;
-  String taskDate;
+  Task task;
 
 
-  TaskWidget(
-      {required this.taskTitle, required this.taskDesc, required this.taskDate});
+  TaskWidget({
+      required this.task});
 
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<AppConfigProvider>(context);
+    var listProvider = Provider.of<ListProvider>(context);
 
     return InkWell(
       onTap: () {
         Navigator.of(context).pushNamed(EditTaskScreen.routeName,
-            arguments: TaskArguments(title: taskTitle,date: taskDate,desc: taskDesc)
+            arguments: TaskArguments(title: task.title!,date: task.dateTime.toString(),desc: task.description!)
         );
       },
       child: Container(
@@ -50,7 +52,14 @@ class TaskWidget extends StatelessWidget {
                     bottomLeft: Radius.circular(15),
 
                   ),
-                  onPressed: (context) {},
+                  onPressed: (context) {
+                    FirebaseUtils.deleteTask(task).timeout(
+                      Duration(milliseconds: 500),
+                      onTimeout: () {
+                        listProvider.getAllTasksFromFireStore();
+                      },
+                    );
+                  },
                   backgroundColor: Color(0xFFFE4A49),
                   foregroundColor: Colors.white,
                   icon: Icons.delete,
@@ -85,25 +94,19 @@ class TaskWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            taskTitle,
+                            task.title!,
                             style: Theme
                                 .of(context)
                                 .textTheme
                                 .titleMedium,
                           ),
                           Text(
-                            taskDesc, style: Theme
+                            task.description!, style: Theme
                               .of(context)
                               .textTheme
                               .titleSmall,
                           ),
-                          Text(
-                            taskDate, // Replace with your actual subtext
-                            style: Theme
-                                .of(context)
-                                .textTheme
-                                .bodySmall,
-                          ),
+
                         ],
                       ),
                     ),

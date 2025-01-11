@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:todo/home/home_screen.dart';
 import 'package:todo/my_theme.dart';
 import 'package:todo/providers/app_config_provider.dart';
+import 'package:todo/providers/list_provider.dart';
 import 'package:todo/task-list/screens/edit_task_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 Future<void> main() async {
@@ -13,9 +14,14 @@ Future<void> main() async {
   await FirebaseFirestore.instance.disableNetwork();
   FirebaseFirestore.instance.settings =
       Settings(cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED);
-  runApp(ChangeNotifierProvider(
-    create: (context) => AppConfigProvider(),
-      child: MyApp()));
+  runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AppConfigProvider()),
+          ChangeNotifierProvider(create: (_) => ListProvider()),
+        ],
+        child: MyApp(),
+      ));
 }
 
 class MyApp extends StatelessWidget {
