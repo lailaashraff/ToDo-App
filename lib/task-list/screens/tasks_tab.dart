@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:todo/my_theme.dart';
 import 'package:todo/providers/list_provider.dart';
 import 'package:todo/task-list/widgets/task_widget.dart';
-
 import '../../providers/app_config_provider.dart';
 
 class TasksTab extends StatefulWidget {
@@ -28,10 +27,12 @@ class _TasksTabState extends State<TasksTab> {
     return Column(
       children: [
         CalendarTimeline(
-          initialDate: DateTime.now(),
+          initialDate: listProvider.selectedDate,
           firstDate: DateTime.now().subtract(Duration(days: 365)),
           lastDate: DateTime.now().add(Duration(days: 365)),
-          onDateSelected: (date) => print(date),
+          onDateSelected: (date) {
+            listProvider.setNewSelectedDate(date);
+          },
           leftMargin: 20,
           monthColor: MyTheme.blackColor,
           dayColor: MyTheme.blackColor,
@@ -41,9 +42,9 @@ class _TasksTabState extends State<TasksTab> {
         ),
         Expanded(
           child: ListView.builder(
-              itemBuilder: (context, index) {
-                return TaskWidget(task: listProvider.taskList[index],);
-              },
+            itemBuilder: (context, index) {
+              return TaskWidget(task: listProvider.taskList[index],);
+            },
             itemCount: listProvider.taskList.length,
 
           ),
