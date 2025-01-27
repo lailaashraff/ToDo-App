@@ -5,11 +5,14 @@ import 'package:todo/firebase_utils.dart';
 import 'package:todo/my_theme.dart';
 import 'package:todo/task-list/screens/edit_task_screen.dart';
 
+import '../../dialog_utils.dart';
 import '../../models/task.dart';
 import '../../providers/app_config_provider.dart';
+import '../../providers/authentication_provider.dart';
 import '../../providers/list_provider.dart';
+import '../../toast_utils.dart';
 
-class TaskWidget extends StatelessWidget {
+class TaskWidget extends StatefulWidget {
   Task task;
 
 
@@ -17,14 +20,21 @@ class TaskWidget extends StatelessWidget {
       required this.task});
 
   @override
+  State<TaskWidget> createState() => _TaskWidgetState();
+}
+
+class _TaskWidgetState extends State<TaskWidget> {
+  @override
   Widget build(BuildContext context) {
     var provider = Provider.of<AppConfigProvider>(context);
     var listProvider = Provider.of<ListProvider>(context);
+    var authProvider = Provider.of<AuthenticationProvider>(context,listen: false);
+
 
     return InkWell(
       onTap: () {
         Navigator.of(context).pushNamed(EditTaskScreen.routeName,
-            arguments: TaskArguments(title: task.title!,date: task.dateTime.toString(),desc: task.description!)
+            arguments: TaskArguments(title: widget.task.title!,date: widget.task.dateTime!,desc: widget.task.description!,id: widget.task.id!)
         );
       },
       child: Container(
@@ -53,12 +63,16 @@ class TaskWidget extends StatelessWidget {
 
                   ),
                   onPressed: (context) {
-                    FirebaseUtils.deleteTask(task).timeout(
-                      Duration(milliseconds: 500),
-                      onTimeout: () {
-                        listProvider.getAllTasksFromFireStore();
-                      },
-                    );
+                    FirebaseUtils.deleteTask(widget.task, authProvider.currentUser!.id!)
+                        .then((value) {
+                      listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
+                      ToastUtils.showToast(toastMessage: 'Todo deleted successfully',
+                          toastColor: Colors.red);
+                    },);
+                    setState(() {
+
+                    });
+
                   },
                   backgroundColor: Color(0xFFFE4A49),
                   foregroundColor: Colors.white,
@@ -81,7 +95,7 @@ class TaskWidget extends StatelessWidget {
                 children: [
                   SizedBox(width: 10),
                   VerticalDivider(
-                    color: MyTheme.primaryLightColor,
+                    color: widget.task.isDone!=null && widget.task.isDone! ? MyTheme.greenColor : MyTheme.primaryLightColor,
                     thickness: 4.5,
                     indent: 6,
                     endIndent: 6,
@@ -94,14 +108,21 @@ class TaskWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            task.title!,
-                            style: Theme
+                            widget.task.title!,
+                            style: widget.task.isDone!=null && widget.task.isDone! ?
+                            Theme
+                                .of(context)
+                                .textTheme
+                                .titleMedium?.copyWith(
+                              color: MyTheme.greenColor
+                            ) :
+                            Theme
                                 .of(context)
                                 .textTheme
                                 .titleMedium,
                           ),
                           Text(
-                            task.description!, style: Theme
+                            widget.task.description!, style: Theme
                               .of(context)
                               .textTheme
                               .titleSmall,
@@ -113,7 +134,11 @@ class TaskWidget extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Container(
+                    child: widget.task.isDone!=null && widget.task.isDone! ?
+                        Text("DONE! ", style:Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: MyTheme.greenColor
+                        ),):
+                    Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: MediaQuery
                             .of(context)
@@ -128,10 +153,15 @@ class TaskWidget extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         color: MyTheme.primaryLightColor,
                       ),
-                      child: Icon(
-                        Icons.check,
-                        color: MyTheme.whiteColor,
-                        size: 30,
+                      child: InkWell(
+                        child: Icon(
+                          Icons.check,
+                          color: MyTheme.whiteColor,
+                          size: 30,
+                        ),
+                        onTap: (){
+                          markTodoAsDone(widget.task);
+                        },
                       ),
                     ),
                   )
@@ -143,14 +173,37 @@ class TaskWidget extends StatelessWidget {
       ),
     );
   }
+
+  void markTodoAsDone(Task task) {
+    task.isDone=true;
+    updateTaskChanges(task);
+
+  }
+  void updateTaskChanges(Task task) {
+
+    var authProvider = Provider.of<AuthenticationProvider>(
+        context, listen: false);
+
+    FirebaseUtils.updateTask(task, authProvider.currentUser!.id!)
+        .then((value) {
+      listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
+      ToastUtils.showToast(toastMessage: 'Todo completed successfully',
+          toastColor: Colors.green);
+    },);
+
+    setState(() {
+
+    });
+  }
 }
 
 
 class TaskArguments {
   String title;
   String desc;
-  String date;
+  DateTime date;
+  String id;
 
-  TaskArguments({required this.date,required this.title,required this.desc});
+  TaskArguments({required this.date,required this.title,required this.desc,required this.id});
 
 }

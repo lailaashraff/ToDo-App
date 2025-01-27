@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:todo/dialog_utils.dart';
 import 'package:todo/firebase_utils.dart';
 import 'package:todo/models/task.dart';
 import 'package:todo/my_theme.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:todo/toast_utils.dart';
 
 import '../../providers/app_config_provider.dart';
+import '../../providers/authentication_provider.dart';
 import '../../providers/list_provider.dart';
 
 class AddTaskBottomSheet extends StatefulWidget {
@@ -25,10 +29,12 @@ late ListProvider listProvider;
 var formKey = GlobalKey<FormState>();
 
 class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
+
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<AppConfigProvider>(context);
-    listProvider=Provider.of(context);
+    listProvider = Provider.of(context);
+
     return Container(
       color: provider.isDarkMode() ? MyTheme.navy : MyTheme.whiteColor,
       child: Column(
@@ -56,8 +62,8 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextFormField(
-                      onChanged: (text){
-                        title=text;
+                      onChanged: (text) {
+                        title = text;
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -76,8 +82,8 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       height: 10,
                     ),
                     TextFormField(
-                      onChanged: (text){
-                        description=text;
+                      onChanged: (text) {
+                        description = text;
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -145,7 +151,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   void showCalender() async {
     var chosenDate = await showDatePicker(
         context: context,
-        initialDate:selectedDate,
+        initialDate: selectedDate,
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(Duration(days: 365)));
     if (chosenDate != null) {
@@ -163,13 +169,19 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
       Task task = Task(
           title: title, dateTime: selectedDate, description: description);
 
-      FirebaseUtils.addTaskToFireBase(task).timeout(
-        Duration(milliseconds: 500),
-        onTimeout: () {
-          listProvider.getAllTasksFromFireStore();
-          Navigator.of(context).pop();
-        },
-      );
+      var authProvider = Provider.of<AuthenticationProvider>(
+          context, listen: false);
+
+      DialogUtils.showLoading(context, "Loading...");
+      FirebaseUtils.addTaskToFireBase(task, authProvider.currentUser!.id!)
+          .then((value) {
+            DialogUtils.hideDialog(context);
+        listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
+        Navigator.of(context).pop();
+        ToastUtils.showToast(toastMessage: 'Todo added successfully',
+            toastColor: Colors.green);
+      },);
+
       setState(() {
 
       });

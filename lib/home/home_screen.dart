@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todo/login/login_screen.dart';
+import 'package:todo/providers/list_provider.dart';
 import 'package:todo/settings/screens/settings_tab.dart';
 import 'package:todo/task-list/screens/tasks_tab.dart';
 import 'package:todo/task-list/widgets/add_task_bottom_sheet.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../my_theme.dart';
+import '../providers/authentication_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = 'home-screen';
@@ -17,8 +21,12 @@ class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
   List<Widget> tabs = [TasksTab(),SettingsTab() ];
 
+
   @override
   Widget build(BuildContext context) {
+    var listProvider=Provider.of<ListProvider>(context);
+    var authProvider = Provider.of<AuthenticationProvider>(context);
+
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
@@ -26,6 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
           AppLocalizations.of(context)!.todoTitle,
           style: Theme.of(context).textTheme.titleLarge,
         ),
+        actions: [
+          IconButton(onPressed: (){
+            listProvider.taskList=[];
+            authProvider.currentUser=null;
+            Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+          }, icon: Icon(Icons.logout))
+        ],
       ),
       bottomNavigationBar: BottomAppBar(
         padding: const EdgeInsets.symmetric(horizontal: 10),

@@ -3,8 +3,14 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../dialog_utils.dart';
+import '../../firebase_utils.dart';
+import '../../models/task.dart';
 import '../../my_theme.dart';
 import '../../providers/app_config_provider.dart';
+import '../../providers/authentication_provider.dart';
+import '../../providers/list_provider.dart';
+import '../../toast_utils.dart';
 import '../widgets/task_widget.dart';
 
 class EditTaskScreen extends StatefulWidget {
@@ -17,16 +23,21 @@ class EditTaskScreen extends StatefulWidget {
 TextEditingController titleController = TextEditingController();
 
 TextEditingController descController = TextEditingController();
+late String taskId;
 
-DateTime selectedDate = DateTime.now();
+late DateTime selectedDate ;
 String formattedDate = "";
 var formKey = GlobalKey<FormState>();
+late ListProvider listProvider;
+
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<AppConfigProvider>(context);
     var args = ModalRoute.of(context)?.settings.arguments as TaskArguments;
+    listProvider = Provider.of(context);
+
     receiveArguments(args);
     return Scaffold(
       appBar: AppBar(
@@ -113,9 +124,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                             showCalender();
                           },
                           child: Text(
-                            formattedDate != null && formattedDate.isNotEmpty
-                                ? formattedDate
-                                : args.date,
+                            formattedDate.isNotEmpty ? formattedDate : DateFormat.yMd().format(args.date),
                             style: provider.isDarkMode()
                                 ? Theme.of(context)
                                     .textTheme
@@ -135,7 +144,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                           ),
                           child: ElevatedButton(
                             onPressed: () {
-                              showCalender();
+                              saveTaskChanges();
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: MyTheme.primaryLightColor,
@@ -162,6 +171,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   void receiveArguments(var args) {
     titleController.text = args.title;
     descController.text = args.desc;
+    selectedDate=args.date;
+    taskId=args.id;
   }
 
   void showCalender() async {
@@ -172,9 +183,31 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         lastDate: DateTime.now().add(Duration(days: 365)));
     if (chosenDate != null) {
       selectedDate = chosenDate;
-      formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate);
+      formattedDate = DateFormat.yMd().format(selectedDate); // Proper formatting
     }
 
     setState(() {});
+  }
+
+  void saveTaskChanges() {
+    Task task = Task(
+        title:titleController.text,id: taskId , dateTime: selectedDate, description:   descController.text);
+
+    var authProvider = Provider.of<AuthenticationProvider>(
+        context, listen: false);
+
+    DialogUtils.showLoading(context, "Loading...");
+    FirebaseUtils.updateTask(task, authProvider.currentUser!.id!)
+        .then((value) {
+      DialogUtils.hideDialog(context);
+      listProvider.getAllTasksFromFireStore(authProvider.currentUser!.id!);
+      Navigator.of(context).pop();
+      ToastUtils.showToast(toastMessage: 'Todo updated successfully',
+          toastColor: MyTheme.primaryLightColor);
+    },);
+
+    setState(() {
+
+    });
   }
 }
